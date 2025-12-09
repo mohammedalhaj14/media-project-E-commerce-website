@@ -1,17 +1,22 @@
 <?php
-// قراءة إعدادات الاتصال من متغيرات البيئة المحددة في Render
-$servername = getenv('DB_HOST') ?: 'localhost'; 
-$username   = getenv('DB_USERNAME') ?: 'root';
-$password   = getenv('DB_PASSWORD') ?: ''; // يجب تعديل هذه القيمة إلى كلمة مرورك المحلية إذا كانت موجودة
-$dbname     = getenv('DB_DATABASE') ?: 'your_local_db_name'; // استبدل 'your_local_db_name' باسم قاعدة البيانات المحلية لديك
-$port       = getenv('DB_PORT') ?: 3306; // البورت الافتراضي لـ MySQL
+// تأكد من قراءة المتغيرات البيئية (إذا كنت تستخدم مكتبة dotenv)
+// ...
 
-// إنشاء الاتصال باستخدام MySQLi (بما أن مشروعك Pure PHP)
-$conn = new mysqli($servername, $username, $password, $dbname, $port);
+$servername = getenv('DB_HOST');
+$username = getenv('DB_USERNAME');
+$password = getenv('DB_PASSWORD');
+$dbname = getenv('DB_DATABASE');
+$port = getenv('DB_PORT');
 
-// التحقق من الاتصال
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error); 
+// استخدام DSN لـ PostgreSQL
+$dsn = "pgsql:host=$servername;port=$port;dbname=$dbname";
+
+try {
+    $conn = new PDO($dsn, $username, $password);
+    // تعيين وضع الخطأ
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+    // يمكنك تسجيل الخطأ بدلاً من إظهاره مباشرة
+    die("Connection failed: " . $e->getMessage()); 
 }
-// ... بقية شيفرة الاتصال
 ?>
