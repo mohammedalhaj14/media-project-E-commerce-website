@@ -8,8 +8,19 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
+# --- FIXES BELOW ---
+
+# Create the database directory and the SQLite file, 
+# and ensure the web server user (www-data) can read/write to it.
+# IMPORTANT: Verify the path /var/www/html/database matches your PHP app's config!
+RUN mkdir -p database \ 
+    && touch database/database.sqlite \
+    && chown -R www-data:www-data database
+
+# --- END FIXES ---
+
 # Expose port
 EXPOSE 80
 
+# The default command to run the Apache server
 CMD ["apache2-foreground"]
-RUN touch /var/www/database/database.sqlite
