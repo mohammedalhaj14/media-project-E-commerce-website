@@ -1,28 +1,34 @@
-# Use an official PHP image with the Apache web server (Matching your XAMPP setup)
-FROM php:8.2-apache
+# Stage 1: The Base Image
+# Uses the official PHP 8.0 image with the Apache web server
+FROM php:8.0-apache-bullseye AS base
 
-# 1. Install required PHP extensions (Crucial for SQLite)
-# This installs the PHP Data Objects (PDO) and the SQLite driver.
-RUN docker-php-ext-install pdo pdo_sqlite
-
-# 2. Enable Apache Rewrite Module
-RUN a2enmod rewrite
-
-# 3. Set the working directory to the web root
+# Set the working directory to the web root
 WORKDIR /var/www/html
 
-# 4. Copy project files from your Git repository into the container
+# 1. Install System Dependencies and PHP Extensions
+# This command installs the MySQL driver (pdo_mysql) needed for your external database connection
+# and enables Apache's rewrite module for clean URLs.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git \
+    && rm -rf /var/lib/apt/lists/* && \
+    \
+    # Install PHP MySQL/MariaDB extension
+    docker-php-ext-install pdo pdo_mysql && \
+    \
+    # Enable Apache Rewrite Module
+    a2enmod rewrite
+
+# 2. Copy the Application Code
+# Copies all files from your project root into the container's web root
 COPY . .
 
-# 5. Create the database directory and file, and ensure web server user (www-data) 
-#    has correct read/write permissions.
-#    The path 'Database/database.sqlite' matches your project structure.
-RUN mkdir -p Database \ 
-    && touch Database/database.sqlite \
-    && chown -R www-data:www-data Database
+# 3. Correct Permissions (Security Best Practice)
+# Ensures the web server user (www-data) owns the application files for security and functionality
+RUN chown -R www-data:www-data /var/www/html
 
-# 6. Expose the default HTTP port
+# 4. Expose the port (Mainly documentation for container networking)
 EXPOSE 80
 
-# 7. Start the Apache web server in the foreground
+# 5. Start the Apache web server
 CMD ["apache2-foreground"]
