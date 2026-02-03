@@ -12,12 +12,12 @@ A high-performance, full-stack digital marketplace designed for media distributi
 ### 🖥️ Desktop Experience
 | **Discovery Portal** | **Media Insights** |
 | :--- | :--- |
-| ![Home Page](iimages/home.png) | ![Movie Page](iimages/moviePage.png) |
+| ![Home Page](images/home.png) | ![Movie Page](images/moviePage.png) |
 
 ### 🔐 User Lifecycle & Commerce
 | Sign In | Create Account | Shopping Cart |
 | :--- | :--- | :--- |
-| ![Login](iimages/login.png) | ![Registration](iimages/registration.png) | ![Cart](iimages/caqrt.png) |
+| ![Login](images/login.png) | ![Registration](images/registration.png) | ![Cart](images/cart.png) |
 
 ---
 
