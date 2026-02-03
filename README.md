@@ -1,6 +1,4 @@
 # 🎬 MediaStream E-Commerce Platform
-[![PHP Version](https://img.shields.io/badge/php-%5E7.4%20%7C%20%5E8.0-blue.svg)](https://www.php.net/)
-[![Stripe Integration](https://img.shields.io/badge/Payments-Stripe-6772e5.svg)](https://stripe.com/)
 
 A high-performance, full-stack digital marketplace designed for media distribution. This platform integrates secure user authentication, dynamic inventory management, and a robust checkout flow powered by the Stripe API.
 
@@ -9,14 +7,16 @@ A high-performance, full-stack digital marketplace designed for media distributi
 ## 🖼️ Interface Gallery
 
 ### 🖥️ Desktop Experience
+
 | **Discovery Portal** | **Media Insights** |
-| :--- | :--- |
-| ![Home Page](images/home.png) | ![Movie Page](images/moviePage.png) |
+| --- | --- |
+|  |  |
 
 ### 🔐 User Lifecycle & Commerce
+
 | Sign In | Create Account | Shopping Cart |
-| :--- | :--- | :--- |
-| ![Login](images/login.png) | ![Registration](images/registration.png) | ![cart](images/cart.png) |
+| --- | --- | --- |
+|  |  |  |
 
 ---
 
@@ -32,7 +32,7 @@ A high-performance, full-stack digital marketplace designed for media distributi
 ## 🛠️ Technical Stack
 
 | Component | Technology |
-| :--- | :--- |
+| --- | --- |
 | **Language** | PHP 8.x, JavaScript (ES6+) |
 | **Styling** | Bootstrap 5, CSS3 |
 | **Database** | MySQL |
@@ -42,7 +42,13 @@ A high-performance, full-stack digital marketplace designed for media distributi
 
 ## ⚙️ Quick Start
 
-1.  **Clone:** `git clone https://github.com/mohammedalhaj14/Media-E-Commerce-Project-PHP.git`
-2.  **Database:** Import `database.sql` into phpMyAdmin.
-3.  **Config:** Update `db_config.php` with your local SQL credentials.
-4.  **Stripe:** Add your API keys to `checkout.php`.
+1. **Clone:** `git clone https://github.com/mohammedalhaj14/Media-E-Commerce-Project-PHP.git`
+2. **Database:** Import `database.sql` into phpMyAdmin.
+3. **Config:** Update `db_config.php` with your local SQL credentials.
+4. **Stripe:** Add your API keys to `checkout.php`.
+
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. This allows for free use, modification, and distribution of the software, provided the original copyright notice and permission notice are included.
