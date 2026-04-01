@@ -1,4 +1,5 @@
 # 🎬 MediaStream E-Commerce Platform
+
 [![PHP Version](https://img.shields.io/badge/php-%5E7.4%20%7C%20%5E8.0-blue.svg)](https://www.php.net/)
 [![Stripe Integration](https://img.shields.io/badge/Payments-Stripe-6772e5.svg)](https://stripe.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,14 +11,16 @@ A high-performance, full-stack digital marketplace designed for media distributi
 ## 🖼️ Interface Gallery
 
 ### 🖥️ Desktop Experience
-| **Discovery Portal** | **Media Insights** |
-| :--- | :--- |
+
+| **Discovery Portal**          | **Media Insights**                  |
+| :---------------------------- | :---------------------------------- |
 | ![Home Page](images/home.png) | ![Movie Page](images/moviePage.png) |
 
 ### 🔐 User Lifecycle & Commerce
-| Sign In | Create Account | Shopping Cart |
-| :--- | :--- | :--- |
-| ![Login](images/login.png) | ![Registration](images/registration.png) | ![Cart](images/cart.png) |
+
+| Sign In                    | Create Account                            | Shopping Cart            |
+| :------------------------- | :---------------------------------------- | :----------------------- |
+| ![Login](images/login.png) | ![Registration](images/registratiion.png) | ![Cart](images/cart.png) |
 
 ---
 
@@ -32,21 +35,34 @@ A high-performance, full-stack digital marketplace designed for media distributi
 
 ## 🛠️ Technical Stack
 
-| Component | Technology |
-| :--- | :--- |
+| Component    | Technology                 |
+| :----------- | :------------------------- |
 | **Language** | PHP 8.x, JavaScript (ES6+) |
-| **Styling** | Bootstrap 5, CSS3 |
-| **Database** | MySQL |
-| **Payments** | Stripe API |
+| **Styling**  | Bootstrap 5, CSS3          |
+| **Database** | MySQL                      |
+| **Payments** | Stripe API                 |
 
 ---
 
 ## ⚙️ Quick Start
 
-1.  **Clone:** `git clone https://github.com/mohammedalhaj14/Media-E-Commerce-Project-PHP.git`
-2.  **Database:** Import `database.sql` into phpMyAdmin.
-3.  **Config:** Update `db_config.php` with your local SQL credentials.
-4.  **Stripe:** Add your API keys to `checkout.php`.
+1. **Clone:**
+
+   ```bash
+   git clone https://github.com/mohammedalhaj14/Media-E-Commerce-Project-PHP.git
+   ```
+
+2. **Database:**
+
+   * Import `database.sql` into phpMyAdmin.
+
+3. **Configuration:**
+
+   * Update `db_config.php` with your database credentials.
+
+4. **Stripe Setup:**
+
+   * Add your API keys inside `checkout.php`.
 
 ---
 
