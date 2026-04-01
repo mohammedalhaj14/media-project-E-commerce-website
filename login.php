@@ -20,11 +20,11 @@ if(isset($_SESSION["login"])){
         <form action="actions/login.php" method="POST">
             <div class="form-group">
                 <label for="exampleInputEmail1">Username</label><br>
-                <input name="username" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter New Categories"><br>
+                <input name="username" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter username"><br>
             </div>
             <div class="form-group">
                 <label for="exampleInputEmail1">Password</label><br>
-                <input name="password" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter New Categories"><br>
+                <input name="password" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter password"><br>
             </div>
             <input type="checkbox" name="keep-me" id=""><label for="">Keep me Login</label>
             <button type="submit" class="btn btn-primary">Submit</button>
