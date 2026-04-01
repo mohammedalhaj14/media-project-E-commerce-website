@@ -20,27 +20,27 @@ if(isset($_SESSION["login"])){
         <form action="actions/registration.php" method="POST">
             <div class="form-group">
                 <label for="exampleInputEmail1">First Name</label><br>
-                <input name="fname" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter New Categories"><br>
+                <input name="fname" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter your name"><br>
             </div>
             <div class="form-group">
                 <label for="exampleInputEmail1">Last Name</label><br>
-                <input name="lname" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter New Categories"><br>
+                <input name="lname" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter your last name"><br>
             </div>
             <div class="form-group">
                 <label for="exampleInputEmail1">Phone</label><br>
-                <input name="phone" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter New Categories"><br>
+                <input name="phone" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter your phone"><br>
             </div>
             <div class="form-group">
                 <label for="exampleInputEmail1">Address</label><br>
-                <input name="address" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter New Categories"><br>
+                <input name="address" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter your address"><br>
             </div>
             <div class="form-group">
                 <label for="exampleInputEmail1">Username</label><br>
-                <input name="username" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter New Categories"><br>
+                <input name="username" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter username"><br>
             </div>
             <div class="form-group">
                 <label for="exampleInputEmail1">Password</label><br>
-                <input name="password" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter New Categories"><br>
+                <input name="password" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter password"><br>
             </div>
             <label for="">Gender</label>
             <select name="gender" class="form-select" aria-label="Default select example">
