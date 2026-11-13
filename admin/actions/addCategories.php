@@ -1,19 +1,16 @@
 <?php
-session_start();
-if(!isset($_SESSION["admin"])){
-    header("location:../index.php");
-    die();
+require_once __DIR__ . '/_bootstrap.php';
+require_admin();
+
+$name = post_text('categories', 20);              // categories.CategoryName is varchar(20)
+if ($name === '') {
+    flash_redirect('addCategorie', false, 'categories.php');
 }
-if(isset($_POST["categories"]) && !empty(trim($_POST["categories"]))){
-    $categorie = trim($_POST["categories"]);
-    require_once("../../connection.php");
-    $sql = "INSERT INTO categories(CategoryName) VALUES(:categorie);" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":categorie" , $categorie);
-    $stmt->execute();
-    $_SESSION["addCategorie"] = true ;
-    header("location:../categories.php");
-}else{
-    $_SESSION["addCategorie"] = false ;
-    header("location:../categories.php");
-}
+
+require_once __DIR__ . '/../../connection.php';
+
+$stmt = $pdo->prepare("INSERT INTO categories (CategoryName) VALUES (:name)");
+$stmt->bindValue(':name', $name);
+$stmt->execute();
+
+flash_redirect('addCategorie', true, 'categories.php');

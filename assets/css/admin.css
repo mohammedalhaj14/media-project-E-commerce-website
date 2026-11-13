@@ -1,0 +1,60 @@
+/* Admin-only additions. Loaded after style.css by admin/includes/header.php */
+
+.table-admin {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: rgba(255, 255, 255, .025);
+    --bs-table-hover-bg: rgba(245, 197, 24, .06);
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+.table-admin thead th {
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: .8rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+.table-admin td,
+.table-admin th { padding: .85rem 1rem; }
+
+.pagination {
+    --bs-pagination-bg: var(--surface);
+    --bs-pagination-color: var(--text);
+    --bs-pagination-border-color: var(--border);
+    --bs-pagination-hover-bg: var(--surface-2);
+    --bs-pagination-hover-color: var(--accent);
+    --bs-pagination-hover-border-color: var(--border);
+    --bs-pagination-focus-bg: var(--surface-2);
+    --bs-pagination-active-bg: var(--accent);
+    --bs-pagination-active-color: #111;
+    --bs-pagination-active-border-color: var(--accent);
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.4rem;
+    height: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    text-decoration: none;
+    transition: transform .2s ease, border-color .2s ease;
+}
+.stat-card:hover { transform: translateY(-3px); border-color: var(--accent); color: var(--text); }
+.stat-card .icon {
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(245, 197, 24, .12);
+    color: var(--accent);
+    font-size: 1.5rem;
+}
+.stat-card .count { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.stat-card .label { color: var(--muted); font-size: .9rem; }

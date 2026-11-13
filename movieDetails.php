@@ -1,169 +1,112 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        /* General Styles */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
-    color: #333;
-}
+<?php
+session_start();            // nothing may be printed before this line
+$movieId = (isset($_GET['movieID']) && is_numeric($_GET['movieID'])) ? (int) $_GET['movieID'] : 0;
 
-/* Container Styles */
-div {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    background: white;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+$pageTitle  = 'Movie details';
+$activePage = '';
+require_once __DIR__ . '/includes/header.php';
 
-/* Image Styles */
-div img {
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
+// Movie + director
+$stmt = $pdo->prepare(
+    "SELECT m.*, d.DirectorName
+     FROM movies m
+     LEFT JOIN directors d ON d.DirectorID = m.DirectorID
+     WHERE m.MovieID = :id"
+);
+$stmt->bindValue(':id', $movieId, PDO::PARAM_INT);
+$stmt->execute();
+$movie = $stmt->fetch(PDO::FETCH_ASSOC);
 
-/* Text Styles */
-div span {
-    font-size: 18px;
-    margin: 5px 0;
-}
-
-/* Button Styles */
-form input[type="submit"] {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 20px;
-}
-
-form input[type="submit"]:hover {
-    background-color: #0056b3;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    div {
-        padding: 15px;
-    }
-
-    div img {
-        width: 150px;
-        height: 150px;
-    }
-
-    div span {
-        font-size: 16px;
-    }
-
-    form input[type="submit"] {
-        font-size: 14px;
-        padding: 8px 16px;
-    }
-}
-
-    </style>
-</head>
-<body>
-    <?php
-    if(isset($_GET["movieID"]) && !empty(trim($_GET["movieID"])) && is_numeric($_GET["movieID"])){
-        $movieID = trim($_GET["movieID"]);
-        require_once("connection.php");
-        $sql = "SELECT MovieID FROM movies" ;
-        $stmt = $pdo->prepare($sql) ;
-        $stmt->execute();
-        $movies = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $moviesArray = [] ;
-        foreach($movies as $movie){
-            $moviesArray[] = $movie["MovieID"] ;
-        }
-        if(!in_array($movieID , $moviesArray)){
-            die("error");
-        }
-        $sql = "SELECT * FROM movies WHERE MovieID = :id" ;
-        $stmt = $pdo->prepare($sql) ;
-        $stmt->bindParam(":id" , $movieID) ;
-        $stmt->execute();
-        $movieAll = $stmt->fetch(PDO::FETCH_ASSOC);
-        if(!$movieAll){
-            die("error");
-        }
-        ?>
-        <div style="display:flex; flex-direction:column">
-            <img width="200px" height="200px" src="<?php echo $movieAll["images"]; ?>" alt="">
-            <span>Title : <?php echo $movieAll["Title"]; ?></span>
-            <span>Year : <?php echo $movieAll["ProduceYear"]; ?></span>
-            <span>Price : <?php echo $movieAll["UnitPrice"]; ?></span>
-            <?php
-            $sql = "SELECT * FROM directors WHERE DirectorID = :id" ;
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(":id" , $movieAll["DirectorID"]);
-            $stmt->execute();
-            $directorName = $stmt->fetch(PDO::FETCH_ASSOC); 
-            ?>
-            <span>Director :<?php echo $directorName["DirectorName"]; ?></span>
-            <?php
-            $sql = "SELECT * 
-                    FROM categories 
-                    JOIN moviecategories ON categories.CategoryID=moviecategories.CategoryID 
-                    WHERE moviecategories.MovieID = :movieID;" ;
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(":movieID" , $movieAll["MovieID"]);
-            $stmt->execute();
-            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if(!$categories){
-                echo '<p> None </p>';
-            }else{
-                foreach($categories as $categorie){
-                    ?>
-                    <span> Categorie : <?php echo $categorie["CategoryName"]; ?></span>
-                    <?php
-                }
-            } 
-            
-             $sql = "SELECT * 
-                    FROM actors 
-                    JOIN movieactors ON movieactors.ActorID=actors.ActorID 
-                    WHERE movieactors.MovieID=:movieID";
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(":movieID" , $movieAll["MovieID"]);
-            $stmt->execute();
-            $actors = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if(!$actors){
-                echo '<p> None </p>';
-            }else{
-                foreach($actors as $actor){
-                    ?>
-                    <span> Actor : <?php echo $actor["ActorName"]; ?></span>
-                    <?php
-                }
-            } 
-            ?>
-            <form action="actions/addToCard.php" method="POST">
-                <input type="hidden" name="movieID" value="<?php echo $movieAll["MovieID"] ?>">
-                <input type="submit" >
-            </form>
-        </div>
-        <?php
-    
-    }
+if (!$movie) {
     ?>
-</body>
-</html>
+    <div class="container py-5">
+        <div class="panel text-center py-5">
+            <h1 class="h4 mb-3">Movie not found</h1>
+            <a class="btn btn-accent" href="index.php">Back to the store</a>
+        </div>
+    </div>
+    <?php
+    require_once __DIR__ . '/includes/footer.php';
+    exit;
+}
+
+// Categories
+$stmt = $pdo->prepare(
+    "SELECT c.CategoryName
+     FROM categories c
+     JOIN moviecategories mc ON mc.CategoryID = c.CategoryID
+     WHERE mc.MovieID = :id"
+);
+$stmt->bindValue(':id', $movieId, PDO::PARAM_INT);
+$stmt->execute();
+$categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Actors
+$stmt = $pdo->prepare(
+    "SELECT a.ActorName
+     FROM actors a
+     JOIN movieactors ma ON ma.ActorID = a.ActorID
+     WHERE ma.MovieID = :id"
+);
+$stmt->bindValue(':id', $movieId, PDO::PARAM_INT);
+$stmt->execute();
+$actors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+<div class="container py-4">
+    <a href="index.php" class="text-decoration-none text-secondary d-inline-block mb-3">
+        <i class="bi bi-arrow-left"></i> Back to all movies
+    </a>
+
+    <div class="row g-4">
+        <div class="col-md-4 col-lg-3">
+            <img class="detail-poster" src="<?= e($movie['images']) ?>" alt="<?= e($movie['Title']) ?>"
+                 onerror="this.onerror=null;this.src='uploads/1.JPEG'">
+        </div>
+
+        <div class="col-md-8 col-lg-9">
+            <div class="panel">
+                <h1 class="fw-bold mb-1"><?= e($movie['Title']) ?></h1>
+                <p class="text-secondary mb-3"><?= e($movie['ProduceYear']) ?></p>
+
+                <div class="detail-price mb-4">$<?= number_format((float) $movie['UnitPrice'], 2) ?></div>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-3 text-secondary">Director</dt>
+                    <dd class="col-sm-9"><?= e($movie['DirectorName'] ?? 'Unknown') ?></dd>
+
+                    <dt class="col-sm-3 text-secondary">Categories</dt>
+                    <dd class="col-sm-9">
+                        <?php if (!$categories): ?>
+                            <span class="text-secondary">None</span>
+                        <?php else: ?>
+                            <?php foreach ($categories as $category): ?>
+                                <span class="badge badge-soft me-1 mb-1"><?= e($category['CategoryName']) ?></span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </dd>
+
+                    <dt class="col-sm-3 text-secondary">Actors</dt>
+                    <dd class="col-sm-9">
+                        <?php if (!$actors): ?>
+                            <span class="text-secondary">None</span>
+                        <?php else: ?>
+                            <?php foreach ($actors as $actor): ?>
+                                <span class="badge badge-soft me-1 mb-1"><?= e($actor['ActorName']) ?></span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </dd>
+                </dl>
+
+                <form action="actions/addToCard.php" method="POST" class="mt-4">
+                    <input type="hidden" name="movieID" value="<?= (int) $movie['MovieID'] ?>">
+                    <button type="submit" class="btn btn-accent btn-lg">
+                        <i class="bi bi-cart-plus"></i> Add to cart
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

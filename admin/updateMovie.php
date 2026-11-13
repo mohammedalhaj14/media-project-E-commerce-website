@@ -1,195 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-    <?php
-    session_start();
-    if(!isset($_SESSION["admin"])){
-        header("location:../index.php");
-        die();
-    }
+<?php
+$pageTitle   = 'Edit movie';
+$activeAdmin = 'movies';
+require_once __DIR__ . '/includes/header.php';
+
+// The movie id arrives by POST from movies.php (GET is accepted too).
+$rawId = $_POST['id'] ?? ($_GET['id'] ?? '');
+$id    = (is_string($rawId) && ctype_digit($rawId)) ? (int) $rawId : 0;
+
+// Values are read from the database, not trusted from the browser.
+$stmt = $pdo->prepare(
+    "SELECT MovieID, Title, ProduceYear, UnitPrice, Quantity, DirectorID
+     FROM movies WHERE MovieID = :id"
+);
+$stmt->bindValue(':id', $id, PDO::PARAM_INT);
+$stmt->execute();
+$movie = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$movie) {
     ?>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Movie</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <style>
-        /* General Body Styling */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f7f7f7;
-    color: #333;
-}
-
-/* Centering content */
-h1 {
-    text-align: center;
-    color: #343a40;
-    margin-top: 30px;
-}
-
-/* Styling the form container */
-form {
-    width: 70%;
-    margin: 0 auto;
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Form labels */
-form label {
-    font-weight: bold;
-    font-size: 16px;
-    color: #555;
-}
-
-/* Input fields styling */
-form input,
-form select {
-    width: 100%;
-    padding: 12px;
-    margin-top: 8px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-}
-
-form input[type="number"] {
-    -moz-appearance: textfield; /* Removes spinner for number inputs */
-    appearance: textfield;
-}
-
-/* Button styling */
-form input[type="submit"] {
-    background-color: #007bff;
-    color: #fff;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-form input[type="submit"]:hover {
-    background-color: #0056b3;
-}
-
-/* Select styling */
-form select {
-    padding: 12px;
-    background-color: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 14px;
-    color: #555;
-}
-
-/* Additional Styling */
-form .mb-3 {
-    margin-bottom: 20px;
-}
-
-/* Responsive Design for smaller screens */
-@media (max-width: 768px) {
-    form {
-        width: 90%;
-    }
-}
-
-    </style>
-</head>
-<body>
+    <div class="panel text-center py-5">
+        <h1 class="h4 mb-3">Movie not found</h1>
+        <a class="btn btn-accent" href="movies.php">Back to movies</a>
+    </div>
     <?php
-    if(isset($_POST["id"]) && isset($_POST["title"]) && isset($_POST["year"]) && isset($_POST["price"])
-    && isset($_POST["quantite"]) && isset($_POST["directorID"]) && !empty(trim($_POST["id"])) && !empty(trim($_POST["title"]))
-    && !empty(trim($_POST["year"])) && !empty(trim($_POST["price"])) && !empty(trim($_POST["quantite"])) &&
-    !empty(trim($_POST["directorID"])) && is_numeric($_POST["id"])  && is_numeric($_POST["price"])
-    && is_numeric($_POST["year"])  && is_numeric($_POST["quantite"])  && is_numeric($_POST["directorID"])){
-        
-        $id = trim($_POST["id"]);
-        $title = trim($_POST["title"]);
-        $year = trim($_POST["year"]);
-        $price = trim($_POST["price"]);
-        $quantite = trim($_POST["quantite"]);
-        $directorID = trim($_POST["directorID"]);
+    require_once __DIR__ . '/includes/footer.php';
+    exit;
+}
 
-        require_once("../connection.php");
-        $sql = "SELECT MovieID FROM movies" ;
-        $stmt = $pdo->prepare($sql) ;
-        $stmt->execute();
-        $moviesID = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $moviesArray = [] ;
-        foreach($moviesID as $movieID){
-            $moviesArray[] = $movieID["MovieID"];
-        }
-        if(!in_array($id , $moviesArray)){
-            die('error') ; 
-        }
+$directors = $pdo->query("SELECT DirectorID, DirectorName FROM directors ORDER BY DirectorName")->fetchAll(PDO::FETCH_ASSOC);
+?>
 
-        $sql = "SELECT DirectorID FROM directors" ;
-        $stmt = $pdo->prepare($sql) ;
-        $stmt->execute();
-        $directors = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $directorArray = [] ;
-        foreach($directors as $director){
-            $directorArray[] = $director["DirectorID"];
-        }
-        if(!in_array($directorID , $directorArray)){
-            die('error') ; 
-        }
-        ?>
-        <h1 style="text-align:center">Update Movie</h1>
-        <div style="display:flex;justify-content:center;align-items:center;">
-            <form action="actions/updateMovie.php" method="POST">
-                <input type="hidden" name="id" value="<?php echo $id ?>">
-                <div class="mb-3">
-                    <label for="exampleInputEmail1" class="form-label">Title</label>
-                    <input name="title" value="<?php echo $title ?>" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
-                </div>
-                <div class="mb-3">
-                    <label for="exampleInputEmail1" class="form-label">Year</label>
-                    <input name="year" value="<?php echo $year ?>" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
-                </div>
-                <div class="mb-3">
-                    <label for="exampleInputEmail1" class="form-label">Price</label>
-                    <input name="price" value="<?php echo $price ?>" type="number" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
-                </div>
-                <div class="mb-3">
-                    <label for="exampleInputEmail1" class="form-label">quantite</label>
-                    <input name="quantite" value="<?php echo $quantite ?>" type="number" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
-                </div>
-                <label for="">director</label><br>
-                <select name="directorID" class="form-select" aria-label="Default select example">
-                    <?php
-                    $sql = "SELECT * FROM `directors` " ;
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute();
-                    $directors = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                    if(!$directors){
-                        ?>
-                        <option value="">none</option>
-                        <?php
-                    }else{
-                        foreach($directors as $director){
-                            if($director["DirectorID"] == $directorID){ 
-                                ?>
-                                <option selected value="<?php echo $director['DirectorID'] ?>"><?php echo $director["DirectorName"]; ?></option>
-                                <?php
-                            }else{
-                            ?>
-                            <option value="<?php echo $director['DirectorID'] ?>"><?php echo $director["DirectorName"]; ?></option>
-                            <?php
-                            }
-                        }
-                    }
-                    ?>
-                </select><br>
-                <input type="submit" >
-                <?php
-    }
-    ?>
-</body>
-</html>
+<a href="movies.php" class="text-decoration-none text-secondary d-inline-block mb-3">
+    <i class="bi bi-arrow-left"></i> Back to movies
+</a>
+
+<div class="panel" style="max-width: 720px;">
+    <h1 class="h3 fw-bold mb-4">Edit movie</h1>
+
+    <form action="actions/updateMovie.php" method="POST">
+        <input type="hidden" name="id" value="<?= (int) $movie['MovieID'] ?>">
+
+        <div class="row g-3">
+            <div class="col-12">
+                <label for="title" class="form-label">Title</label>
+                <input name="title" type="text" class="form-control" id="title" value="<?= e($movie['Title']) ?>" required>
+            </div>
+            <div class="col-md-4">
+                <label for="year" class="form-label">Year</label>
+                <input name="year" type="number" min="1888" max="2100" class="form-control" id="year" value="<?= e($movie['ProduceYear']) ?>" required>
+            </div>
+            <div class="col-md-4">
+                <label for="price" class="form-label">Price</label>
+                <input name="price" type="number" min="0" step="0.01" class="form-control" id="price" value="<?= e($movie['UnitPrice']) ?>" required>
+            </div>
+            <div class="col-md-4">
+                <label for="quantite" class="form-label">Quantity</label>
+                <input name="quantite" type="number" min="0" step="1" class="form-control" id="quantite" value="<?= e($movie['Quantity']) ?>" required>
+            </div>
+            <div class="col-12">
+                <label for="directorID" class="form-label">Director</label>
+                <select name="directorID" id="directorID" class="form-select">
+                    <?php if (!$directors): ?>
+                        <option value="">None</option>
+                    <?php else: ?>
+                        <?php foreach ($directors as $director): ?>
+                            <option value="<?= (int) $director['DirectorID'] ?>"
+                                <?= (int) $director['DirectorID'] === (int) $movie['DirectorID'] ? 'selected' : '' ?>>
+                                <?= e($director['DirectorName']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-accent mt-4">Save changes</button>
+        <a href="movies.php" class="btn btn-outline-secondary mt-4">Cancel</a>
+    </form>
+</div>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

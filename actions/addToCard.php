@@ -1,77 +1,77 @@
 <?php
-session_start();
+require_once __DIR__ . '/_helpers.php';
 
-// Check if user is logged in
-if (!isset($_SESSION["user"])) {
-    header("location:../login.php");
-    die();
+// Only logged-in customers have a cart.
+if (!isset($_SESSION['user'])) {
+    header('location:../login.php');
+    exit;
+}
+$userId = (int) $_SESSION['user'];
+
+// Show a message on the home page and stop.
+function cart_message(string $message): void
+{
+    $_SESSION['msg'] = $message;
+    header('location:../index.php');
+    exit;
 }
 
-// Validate `movieID` input
-if (isset($_POST["movieID"]) && !empty(trim($_POST["movieID"])) && is_numeric($_POST["movieID"])) {
-    $movieID = trim($_POST["movieID"]);
-    require_once("../connection.php");
-
-    // Validate if the movie exists
-    $sql = "SELECT MovieID FROM movies WHERE MovieID = :movieID";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":movieID", $movieID, PDO::PARAM_INT);
-    $stmt->execute();
-    $movie = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$movie) {
-        die("Error: Movie does not exist.");
-    }
-
-    // Check if the user has an open cart
-    $sql = "SELECT * FROM sales WHERE ClientID = :userID AND Opened = 1";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":userID", $_SESSION["user"], PDO::PARAM_INT);
-    $stmt->execute();
-    $sale = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$sale) {
-        // If no open cart exists, create a new one
-        $sql = "INSERT INTO sales (ClientID, saleDate, Opened) VALUES (:userID, CURRENT_TIMESTAMP, 1)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":userID", $_SESSION["user"], PDO::PARAM_INT);
-        $stmt->execute();
-        $saleID = $pdo->lastInsertId();
-    } else {
-        // Use the existing open cart
-        $saleID = $sale["SaleID"];
-    }
-
-    // Check if the movie is already in the cart
-    $sql = "SELECT * FROM saledetail WHERE SaleID = :saleID AND MovieID = :movieID";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":saleID", $saleID, PDO::PARAM_INT);
-    $stmt->bindParam(":movieID", $movieID, PDO::PARAM_INT);
-    $stmt->execute();
-    $saleDetail = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$saleDetail) {
-        // Add the movie to the cart
-        $sql = "INSERT INTO saledetail (SaleID, MovieID, Qty) VALUES (:saleID, :movieID, 1)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":saleID", $saleID, PDO::PARAM_INT);
-        $stmt->bindParam(":movieID", $movieID, PDO::PARAM_INT);
-        $stmt->execute();
-        $_SESSION["msg"] = "Movie added to your cart.";
-    } else {
-        // Increase the quantity of the movie in the cart
-        $sql = "UPDATE saledetail SET Qty = Qty + 1 WHERE SaleID = :saleID AND MovieID = :movieID";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":saleID", $saleID, PDO::PARAM_INT);
-        $stmt->bindParam(":movieID", $movieID, PDO::PARAM_INT);
-        $stmt->execute();
-        $_SESSION["msg"] = "Movie quantity updated in your cart.";
-    }
-
-    // Redirect to the main page with a success message
-    header("location:../index.php");
-    die();
-} else {
-    die("Error: Invalid parameters.");
+$movieId = post_id('movieID');
+if ($movieId === null) {
+    cart_message('Invalid movie.');
 }
-?>
+
+require_once __DIR__ . '/../connection.php';
+
+// The movie must exist and be in stock.
+$stmt = $pdo->prepare("SELECT Quantity FROM movies WHERE MovieID = :movie");
+$stmt->bindValue(':movie', $movieId, PDO::PARAM_INT);
+$stmt->execute();
+$stock = $stmt->fetchColumn();
+
+if ($stock === false) {
+    cart_message('This movie does not exist.');
+}
+if ((int) $stock < 1) {
+    cart_message('Sorry, this movie is out of stock.');
+}
+
+// Find the open cart, or create one.
+$stmt = $pdo->prepare("SELECT SaleID FROM sales WHERE ClientID = :user AND Opened = 1 LIMIT 1");
+$stmt->bindValue(':user', $userId, PDO::PARAM_INT);
+$stmt->execute();
+$saleId = $stmt->fetchColumn();
+
+if ($saleId === false) {
+    $stmt = $pdo->prepare("INSERT INTO sales (ClientID, saleDate, Opened) VALUES (:user, CURRENT_TIMESTAMP, 1)");
+    $stmt->bindValue(':user', $userId, PDO::PARAM_INT);
+    $stmt->execute();
+    $saleId = $pdo->lastInsertId();
+}
+$saleId = (int) $saleId;
+
+// Is the movie already in the cart?
+$stmt = $pdo->prepare("SELECT Qty FROM saledetail WHERE SaleID = :sale AND MovieID = :movie");
+$stmt->bindValue(':sale', $saleId, PDO::PARAM_INT);
+$stmt->bindValue(':movie', $movieId, PDO::PARAM_INT);
+$stmt->execute();
+$currentQty = $stmt->fetchColumn();
+
+if ($currentQty === false) {
+    $stmt = $pdo->prepare("INSERT INTO saledetail (SaleID, MovieID, Qty) VALUES (:sale, :movie, 1)");
+    $stmt->bindValue(':sale', $saleId, PDO::PARAM_INT);
+    $stmt->bindValue(':movie', $movieId, PDO::PARAM_INT);
+    $stmt->execute();
+    cart_message('Movie added to your cart.');
+}
+
+if ((int) $currentQty + 1 > (int) $stock) {
+    cart_message('You already have the maximum available quantity in your cart.');
+}
+
+$stmt = $pdo->prepare("UPDATE saledetail SET Qty = Qty + 1 WHERE SaleID = :sale AND MovieID = :movie");
+$stmt->bindValue(':sale', $saleId, PDO::PARAM_INT);
+$stmt->bindValue(':movie', $movieId, PDO::PARAM_INT);
+$stmt->execute();
+
+cart_message('Movie quantity updated in your cart.');

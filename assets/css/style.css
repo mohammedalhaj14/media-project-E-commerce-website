@@ -1,0 +1,175 @@
+/* ==========================================================
+   Movie Store - shared theme (Bootstrap 5.3 dark + gold accent)
+   Change the colours here and every page follows.
+   ========================================================== */
+:root {
+    --bg: #0c0e13;
+    --surface: #151922;
+    --surface-2: #1c2230;
+    --border: #283042;
+    --accent: #f5c518;
+    --accent-hover: #ffd84d;
+    --text: #e8ebf2;
+    --muted: #8f9bb0;
+    --radius: 14px;
+}
+
+html[data-bs-theme="dark"] {
+    --bs-body-bg: var(--bg);
+    --bs-body-color: var(--text);
+    --bs-border-color: var(--border);
+    --bs-secondary-color: var(--muted);
+    --bs-link-color-rgb: 245, 197, 24;
+    --bs-link-hover-color-rgb: 255, 216, 77;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main { flex: 1 0 auto; }
+
+/* ---------- Navbar ---------- */
+.navbar-store {
+    background: rgba(12, 14, 19, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+}
+.navbar-store .navbar-brand { font-weight: 800; letter-spacing: .08em; }
+.navbar-store .brand-mark { color: var(--accent); }
+.navbar-store .nav-link { color: var(--muted); font-weight: 600; }
+.navbar-store .nav-link:hover,
+.navbar-store .nav-link.active { color: var(--accent); }
+.cart-link { font-size: 1.25rem; color: var(--text); }
+.cart-link.disabled { color: var(--muted); opacity: .5; pointer-events: none; }
+.cart-link:hover { color: var(--accent); }
+
+/* ---------- Buttons ---------- */
+.btn-accent {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #111;
+    font-weight: 700;
+}
+.btn-accent:hover,
+.btn-accent:focus {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: #111;
+}
+
+/* ---------- Panels & forms ---------- */
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+}
+.form-control,
+.form-select {
+    background-color: var(--surface-2);
+    border-color: var(--border);
+}
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--surface-2);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 .2rem rgba(245, 197, 24, .2);
+}
+.auth-card { max-width: 520px; margin: 2.5rem auto; }
+
+/* ---------- Search ---------- */
+.search-wrap { position: relative; max-width: 560px; margin: 0 auto; }
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    margin-top: .35rem;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+}
+.search-results a {
+    display: block;
+    padding: .65rem 1rem;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+}
+.search-results a:last-child { border-bottom: 0; }
+.search-results a:hover { background: var(--surface-2); color: var(--accent); }
+
+/* ---------- Categories ---------- */
+.category-list .list-group-item {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--muted);
+}
+.category-list .list-group-item:hover { color: var(--accent); background: var(--surface-2); }
+.category-list .list-group-item.active {
+    background: var(--surface-2);
+    color: var(--accent);
+    border-color: var(--accent);
+    font-weight: 700;
+}
+
+/* ---------- Movie cards ---------- */
+.movie-card {
+    display: block;
+    height: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    color: var(--text);
+    text-decoration: none;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.movie-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, .5);
+    color: var(--text);
+}
+.movie-card .poster { aspect-ratio: 2 / 3; background: var(--surface-2); }
+.movie-card .poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.movie-card .info { padding: .8rem .9rem 1rem; }
+.movie-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 .35rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.movie-card .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: .9rem; }
+.movie-card .price { color: var(--accent); font-weight: 700; }
+
+/* ---------- Movie details ---------- */
+.detail-poster { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); }
+.detail-price { color: var(--accent); font-size: 2rem; font-weight: 800; }
+.badge-soft {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 500;
+    padding: .45rem .75rem;
+    border-radius: 999px;
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    padding: 1.25rem 0;
+    margin-top: 3rem;
+    font-size: .9rem;
+}

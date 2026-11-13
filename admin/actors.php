@@ -1,162 +1,113 @@
 <?php
-session_start();
-if (!isset($_SESSION["admin"])) {
-    header("location:../index.php");
-    die();
-}
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actors</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-</head>
-<body>
-<h1 style="text-align:center">Actors</h1>
-<?php
-require_once("../connection.php");
+$pageTitle   = 'Actors';
+$activeAdmin = 'actors';
+require_once __DIR__ . '/includes/header.php';
 
-// Pagination setup
-$limit = 5; // Number of actors per page
-$page = isset($_GET['page']) && is_numeric($_GET['page']) ? $_GET['page'] : 1;
+$limit  = 5;
+$page   = query_page();
 $offset = ($page - 1) * $limit;
+$search = query_string('search');
+$like   = '%' . $search . '%';
 
-// Fetch total number of actors for pagination
-$sqlTotal = "SELECT COUNT(*) as total FROM actors";
-$stmtTotal = $pdo->prepare($sqlTotal);
-$stmtTotal->execute();
-$totalActors = $stmtTotal->fetch(PDO::FETCH_ASSOC)['total'];
-$totalPages = ceil($totalActors / $limit);
-
-// Fetch actors for the current page
-$sql = "SELECT * 
-        FROM actors 
-        JOIN genders ON genders.GenderID = actors.GenderID 
-        JOIN nationalities ON nationalities.NationalityID = actors.NationalityID 
-        LIMIT :limit OFFSET :offset";
-$stmt = $pdo->prepare($sql);
-$stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+$stmt = $pdo->prepare(
+    "SELECT a.ActorID, a.ActorName, g.GenderName, n.NationalityName
+     FROM actors a
+     JOIN genders g ON g.GenderID = a.GenderID
+     JOIN nationalities n ON n.NationalityID = a.NationalityID
+     WHERE a.ActorName LIKE :search
+     ORDER BY a.ActorID
+     LIMIT :limit OFFSET :offset"
+);
+$stmt->bindValue(':search', $like, PDO::PARAM_STR);
+$stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $actors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if (!$actors) {
-    ?>
-    <h3 style="text-align:center;color:red">Empty</h3>
-    <?php
-} else {
-    ?>
-    <table class="table table-striped">
-        <tr>
-            <th>ID</th>
-            <th>Actor Name</th>
-            <th>Gender</th>
-            <th>Nationality</th>
-            <th>Delete</th>
-        </tr>
-        <?php
-        foreach ($actors as $actor) {
-            ?>
-            <tr>
-                <td><?php echo $actor["ActorID"] ?></td>
-                <td><?php echo htmlspecialchars($actor["ActorName"]) ?></td>
-                <td><?php echo htmlspecialchars($actor["GenderName"]) ?></td>
-                <td><?php echo htmlspecialchars($actor["NationalityName"]) ?></td>
-                <td>
-                    <form action="actions/deleteActor.php" method="post">
-                        <input type="hidden" name="id" value="<?php $actor["ActorID"]?>">
-                        <input class="btn btn-danger" type="submit" value="Delete">
-                    </form>
-                </td>
-            </tr>
-            <?php
-        }
-        ?>
-    </table>
-    <?php
-}
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM actors WHERE ActorName LIKE :search");
+$stmt->bindValue(':search', $like, PDO::PARAM_STR);
+$stmt->execute();
+$totalPages = (int) ceil(((int) $stmt->fetchColumn()) / $limit);
 
-// Pagination links
-if ($totalPages > 1) {
-    ?>
-    <nav>
-        <ul class="pagination justify-content-center">
-            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <li class="page-item <?= $i == $page ? 'active' : '' ?>">
-                    <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
-                </li>
-            <?php endfor; ?>
-        </ul>
-    </nav>
-    <?php
-}
+$genders       = $pdo->query("SELECT GenderID, GenderName FROM genders")->fetchAll(PDO::FETCH_ASSOC);
+$nationalities = $pdo->query("SELECT NationalityID, NationalityName FROM nationalities ORDER BY NationalityName")->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<!-- Add Actor Form -->
-<div style="display:flex;justify-content:center;align-items:center">
-    <form action="actions/addActor.php" method="POST">
-        <div class="mb-3">
-            <label for="actorName" class="form-label">Actor Name</label>
-            <input type="text" name="actor" class="form-control" id="actorName">
-        </div>
-        <p>Gender</p>
-        <select name="gender" class="form-select">
-            <?php
-            $sql = "SELECT * FROM genders";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute();
-            $genders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($genders as $gender) {
-                ?>
-                <option value="<?= $gender['GenderID'] ?>"><?= htmlspecialchars($gender["GenderName"]) ?></option>
-                <?php
-            }
-            ?>
-        </select>
-        <p>Nationality</p>
-        <select name="nationality" class="form-select">
-            <?php
-            $sql = "SELECT * FROM nationalities";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute();
-            $nationalities = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($nationalities as $nationality) {
-                ?>
-                <option value="<?= $nationality['NationalityID'] ?>"><?= htmlspecialchars($nationality["NationalityName"]) ?></option>
-                <?php
-            }
-            ?>
-        </select>
-        <button type="submit" class="btn btn-primary mt-3">Submit</button>
-        <?php
-        if (isset($_SESSION["addActor"])) {
-            if ($_SESSION["addActor"] == true) {
-                ?>
-                <p style="color:green">Added Successfully</p>
-                <?php
-            } else {
-                ?>
-                <p style="color:red">Invalid Parameter</p>
-                <?php
-            }
-        }
-        unset($_SESSION["addActor"]);
-            if (isset($_SESSION["deleteActor"])) {
-            if ($_SESSION["deleteActor"] == true) {
-                ?>
-                <p style="color:green">Deleted Successfully</p>
-                <?php
-            } else {
-                ?>
-                <p style="color:red">Invalid Parameter</p>
-                <?php
-            }
-        }
-        unset($_SESSION["deleteActor"]);
-        ?>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <h1 class="h2 fw-bold mb-0">Actors</h1>
+    <form class="d-flex gap-2" method="GET">
+        <input class="form-control" type="search" name="search" value="<?= e($search) ?>" placeholder="Search actors">
+        <button class="btn btn-accent" type="submit"><i class="bi bi-search"></i></button>
     </form>
 </div>
-</body>
-</html>
+
+<?php
+flash('addActor', 'Actor added successfully');
+flash('deleteActor', 'Actor deleted successfully');
+?>
+
+<div class="panel p-0 overflow-hidden mb-4">
+    <?php if (!$actors): ?>
+        <p class="text-center text-secondary py-5 mb-0">No actors found.</p>
+    <?php else: ?>
+        <div class="table-responsive">
+            <table class="table table-admin table-hover">
+                <thead>
+                    <tr><th>ID</th><th>Actor</th><th>Gender</th><th>Nationality</th><th class="text-end">Actions</th></tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($actors as $actor): ?>
+                        <tr>
+                            <td><?= (int) $actor['ActorID'] ?></td>
+                            <td><?= e($actor['ActorName']) ?></td>
+                            <td><?= e($actor['GenderName']) ?></td>
+                            <td><?= e($actor['NationalityName']) ?></td>
+                            <td class="text-end">
+                                <form action="actions/deleteActor.php" method="POST" class="d-inline"
+                                      onsubmit="return confirm('Delete this actor?');">
+                                    <input type="hidden" name="id" value="<?= (int) $actor['ActorID'] ?>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</div>
+
+<?php pagination($page, $totalPages, ['search' => $search]); ?>
+
+<div class="panel mt-4" style="max-width: 720px;">
+    <h2 class="h5 fw-bold mb-3">Add new actor</h2>
+    <form action="actions/addActor.php" method="POST">
+        <div class="row g-3">
+            <div class="col-12">
+                <label for="actorName" class="form-label">Actor name</label>
+                <input type="text" name="actor" class="form-control" id="actorName" required>
+            </div>
+            <div class="col-md-6">
+                <label for="actorGender" class="form-label">Gender</label>
+                <select name="gender" id="actorGender" class="form-select">
+                    <?php foreach ($genders as $gender): ?>
+                        <option value="<?= (int) $gender['GenderID'] ?>"><?= e($gender['GenderName']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="actorNationality" class="form-label">Nationality</label>
+                <select name="nationality" id="actorNationality" class="form-select">
+                    <?php foreach ($nationalities as $nationality): ?>
+                        <option value="<?= (int) $nationality['NationalityID'] ?>"><?= e($nationality['NationalityName']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-accent mt-4">Add actor</button>
+    </form>
+</div>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

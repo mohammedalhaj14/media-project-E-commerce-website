@@ -1,163 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<?php
+$pageTitle   = 'Client details';
+$activeAdmin = 'clients';
+require_once __DIR__ . '/includes/header.php';
+
+$id = (isset($_GET['id']) && ctype_digit((string) $_GET['id'])) ? (int) $_GET['id'] : 0;
+
+$stmt = $pdo->prepare(
+    "SELECT c.ClientID, c.FName, c.LName, c.Phone, c.Address, c.Username,
+            g.GenderName, co.CountryName
+     FROM clients c
+     JOIN genders g    ON g.GenderID    = c.GenderID
+     JOIN countries co ON co.CountryID  = c.CountryID
+     WHERE c.ClientID = :id"
+);
+$stmt->bindValue(':id', $id, PDO::PARAM_INT);
+$stmt->execute();
+$client = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$client) {
+    ?>
+    <div class="panel text-center py-5">
+        <h1 class="h4 mb-3">Client not found</h1>
+        <a class="btn btn-accent" href="clients.php">Back to clients</a>
+    </div>
     <?php
-    session_start();
-if(!isset($_SESSION["admin"])){
-    header("location:../index.php");
-    die();
+    require_once __DIR__ . '/includes/footer.php';
+    exit;
 }
+
+// Orders (Opened = 1 is a cart that was not paid yet)
+$stmt = $pdo->prepare(
+    "SELECT s.SaleID, s.saleDate, s.Opened, SUM(m.UnitPrice * sd.Qty) AS total
+     FROM sales s
+     JOIN saledetail sd ON sd.SaleID  = s.SaleID
+     JOIN movies m      ON m.MovieID  = sd.MovieID
+     WHERE s.ClientID = :id
+     GROUP BY s.SaleID, s.saleDate, s.Opened
+     ORDER BY s.SaleID DESC"
+);
+$stmt->bindValue(':id', $id, PDO::PARAM_INT);
+$stmt->execute();
+$orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Info</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <style>
-        /* General Styles */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
-    margin: 0;
-    padding: 0;
-}
 
-/* Headings */
-h1 {
-    text-align: center;
-    margin: 20px 0;
-    color: #343a40;
-}
+<a href="clients.php" class="text-decoration-none text-secondary d-inline-block mb-3">
+    <i class="bi bi-arrow-left"></i> Back to clients
+</a>
+<h1 class="h2 fw-bold mb-4"><?= e($client['FName'] . ' ' . $client['LName']) ?></h1>
 
-/* Error Messages */
-h3 {
-    text-align: center;
-    color: #dc3545; /* Bootstrap danger red */
-}
+<div class="panel mb-4">
+    <dl class="row mb-0">
+        <dt class="col-sm-3 text-secondary">ID</dt>
+        <dd class="col-sm-9"><?= (int) $client['ClientID'] ?></dd>
 
-/* Table Styles */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px auto;
-    background: #ffffff;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    overflow: hidden;
-}
+        <dt class="col-sm-3 text-secondary">Username</dt>
+        <dd class="col-sm-9"><?= e($client['Username']) ?></dd>
 
-table thead tr {
-    background-color: #007bff; /* Bootstrap primary blue */
-    color: white;
-}
+        <dt class="col-sm-3 text-secondary">Gender</dt>
+        <dd class="col-sm-9"><?= e($client['GenderName']) ?></dd>
 
-table th, table td {
-    padding: 15px;
-    text-align: left;
-    border: 1px solid #dee2e6;
-}
+        <dt class="col-sm-3 text-secondary">Phone</dt>
+        <dd class="col-sm-9"><?= e($client['Phone']) ?></dd>
 
-table tbody tr:nth-child(odd) {
-    background-color: #f9f9f9;
-}
+        <dt class="col-sm-3 text-secondary">Address</dt>
+        <dd class="col-sm-9"><?= e($client['Address']) ?></dd>
 
-table tbody tr:hover {
-    background-color: #e9ecef;
-}
+        <dt class="col-sm-3 text-secondary">Country</dt>
+        <dd class="col-sm-9"><?= e($client['CountryName']) ?></dd>
+    </dl>
+</div>
 
-/* Links */
-a {
-    text-decoration: none;
-    color: #007bff;
-}
+<h2 class="h4 fw-bold mb-3">Orders</h2>
 
-a:hover {
-    text-decoration: underline;
-}
+<div class="panel p-0 overflow-hidden">
+    <?php if (!$orders): ?>
+        <p class="text-center text-secondary py-5 mb-0">This client has no orders.</p>
+    <?php else: ?>
+        <div class="table-responsive">
+            <table class="table table-admin table-hover">
+                <thead>
+                    <tr><th>Order</th><th>Date</th><th>Status</th><th class="text-end">Total</th></tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($orders as $order): ?>
+                        <tr>
+                            <td><a href="orderDetails.php?id=<?= (int) $order['SaleID'] ?>">#<?= (int) $order['SaleID'] ?></a></td>
+                            <td><?= e($order['saleDate']) ?></td>
+                            <td>
+                                <?php if ((int) $order['Opened'] === 1): ?>
+                                    <span class="badge text-bg-warning">Cart (not paid)</span>
+                                <?php else: ?>
+                                    <span class="badge text-bg-success">Paid</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end">$<?= number_format((float) $order['total'], 2) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</div>
 
-    </style>
-</head>
-<body>
-    <?php
-    if(!isset($_GET["id"]) || empty($_GET["id"]) || !is_numeric($_GET["id"])){
-        die("error");
-    }
-    $id = $_GET["id"];
-    require_once("../connection.php");
-    $sql = "SELECT * 
-            FROM clients 
-            JOIN genders ON genders.GenderID=clients.GenderID 
-            JOIN countries ON countries.CountryID=clients.CountryID 
-            WHERE clients.ClientID=:id" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":id" , $id);
-    $stmt->execute();
-    $client = $stmt->fetch(PDO::FETCH_ASSOC);
-    if(!$client){
-        die("error");
-    }
-    ?>
-    <h1 style="text-align: center;">Client</h1>
-    <table class="table table-striped">
-        <tr>
-            <th>ID</th>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Gender</th>
-            <th>Phone</th>
-            <th>Address</th>
-            <th>Country</th>
-            <th>Username</th>
-        </tr>
-        <tr>
-            <td><?php echo $client["ClientID"]; ?></td>
-            <td><?php echo $client["FName"]; ?></td>
-            <td><?php echo $client["LName"]; ?></td>
-            <td><?php echo $client["GenderName"]; ?></td>
-            <td><?php echo $client["Phone"]; ?></td>
-            <td><?php echo $client["Address"]; ?></td>
-            <td><?php echo $client["CountryName"]; ?></td>
-            <td><?php echo $client["Username"]; ?></td>
-        </tr>
-    </table>
-    <h1 style="text-align: center;">Orders</h1>
-    <?php
-    $sql = "SELECT saledetail.SaleID,sales.saleDate,sales.ClientID,SUM(movies.UnitPrice*saledetail.Qty) as total 
-            FROM saledetail 
-            JOIN sales ON sales.SaleID=saledetail.SaleID 
-            JOIN movies ON movies.MovieID=saledetail.MovieID 
-            GROUP BY saledetail.SaleID,sales.saleDate 
-            HAVING sales.ClientID=:id" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":id" , $id);
-    $stmt->execute();
-    $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if(!$orders){
-        ?>
-        <h3 style="text-align: center;color:red">Empty</h3>
-        <?php
-    }else{
-    ?>
-    <table class="table table-striped">
-        <tr>
-            <th>ID</th>
-            <th>Date</th>
-            <th>Total Amount</th>
-        </tr>
-        <?php
-        foreach($orders as $order){
-            ?>
-            <tr>
-                <td><a href="orderDetails.php?id=<?php echo $order["SaleID"]; ?>"><?php echo $order["SaleID"]; ?></a></td>
-                <td><?php echo $order["saleDate"]; ?></td>
-                <td><?php echo $order["total"]; ?></td>
-            </tr>
-            <?php
-        }
-        ?>
-    </table>
-    <?php
-    }
-    ?>
-</body>
-</html>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

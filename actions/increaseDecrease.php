@@ -1,79 +1,55 @@
 <?php
-header("Content-Type: application/json");
-if(isset($_POST["qty"]) && !empty(trim($_POST["qty"])) && is_numeric($_POST["qty"])
-&& isset($_POST["movieID"]) && !empty(trim($_POST["movieID"])) && is_numeric($_POST["movieID"])
-&& isset($_POST["saleID"]) && !empty(trim($_POST["saleID"])) && is_numeric($_POST["saleID"])){
-    $qty = trim($_POST["qty"]);
-    $movieID = trim($_POST["movieID"]);
-    $saleID = trim($_POST["saleID"]);
-    require_once("../connection.php");
-    $sql = "SELECT MovieID FROM movies" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
-    $movies = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $arrayMovies = [];
-    foreach($movies as $movie){
-        $arrayMovies[] = $movie["MovieID"];
-    }
-    if(!in_array($movieID , $arrayMovies)){
-        // die("error");
-        echo json_encode(["error" => "error"]);
-    }
-    $sql = "SELECT SaleID FROM sales" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
-    $sales = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $arraysales = [];
-    foreach($sales as $sale){
-        $arraysales[] = $sale["SaleID"];
-    }
-    if(!in_array($saleID , $arraysales)){
-        // die("error");
-        echo json_encode(["error" => "error"]);
-    }
-    $sql = "SELECT movies.Quantity FROM `movies` WHERE MovieID=:movieID" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":movieID" , $movieID);
-    $stmt->execute();
-    $movieQuantity = $stmt->fetch(PDO::FETCH_ASSOC);
-    $movieQuantity = $movieQuantity["Quantity"];
-    if(isset($_POST["increase"])){
-        if($qty < $movieQuantity ){    
-            $sql = "UPDATE saledetail 
-                    SET saledetail.Qty=saledetail.Qty+1 
-                    WHERE saledetail.SaleID=:saleID   
-                    AND saledetail.MovieID=:movieID";
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(":saleID" , $saleID);        
-            $stmt->bindParam(":movieID" , $movieID);
-            $stmt->execute();
-            // header("location:../card.php");
-            echo json_encode(["increase" => "success increase"]);
-            die();        
-        }else{
-            // header("location:../card.php");
-            echo json_encode(["error" => "error"]);
-            die();
-        }
-    }else{
-        if($qty > 1){
-            $sql = "UPDATE saledetail 
-            SET saledetail.Qty=saledetail.Qty-1 
-            WHERE saledetail.SaleID=:saleID   
-            AND saledetail.MovieID=:movieID";
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(":saleID" , $saleID);        
-            $stmt->bindParam(":movieID" , $movieID);
-            $stmt->execute();
-            // header("location:../card.php");
-            echo json_encode(["decrease" => "decrease success"]);
-            die();   
-        }else{
-            // header("location:../card.php");
-            echo json_encode(["error" => "error"]);
-            die();
-        }
-    }
-}else{
-    echo json_encode(["errorOne" => "error"]);
+require_once __DIR__ . '/_helpers.php';
+
+$userId  = require_user_json();           // 401 JSON when nobody is logged in
+$movieId = post_id('movieID');
+$saleId  = post_id('saleID');
+
+if ($movieId === null || $saleId === null) {
+    json_out(['errorOne' => 'error']);
 }
+
+require_once __DIR__ . '/../connection.php';
+
+// The row must belong to THIS customer's OPEN cart. The quantities come from the database,
+// not from the browser, so they can not be faked.
+$stmt = $pdo->prepare(
+    "SELECT sd.Qty AS Qty, m.Quantity AS Stock
+     FROM saledetail sd
+     JOIN sales  s ON s.SaleID  = sd.SaleID
+     JOIN movies m ON m.MovieID = sd.MovieID
+     WHERE sd.SaleID = :sale AND sd.MovieID = :movie AND s.ClientID = :user AND s.Opened = 1"
+);
+$stmt->bindValue(':sale', $saleId, PDO::PARAM_INT);
+$stmt->bindValue(':movie', $movieId, PDO::PARAM_INT);
+$stmt->bindValue(':user', $userId, PDO::PARAM_INT);
+$stmt->execute();
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$row) {
+    json_out(['error' => 'error']);
+}
+
+$qty   = (int) $row['Qty'];
+$stock = (int) $row['Stock'];
+
+if (isset($_POST['increase'])) {
+    if ($qty >= $stock) {
+        json_out(['error' => 'error']);
+    }
+    $sql    = "UPDATE saledetail SET Qty = Qty + 1 WHERE SaleID = :sale AND MovieID = :movie";
+    $answer = ['increase' => 'success increase'];
+} else {
+    if ($qty <= 1) {
+        json_out(['error' => 'error']);
+    }
+    $sql    = "UPDATE saledetail SET Qty = Qty - 1 WHERE SaleID = :sale AND MovieID = :movie";
+    $answer = ['decrease' => 'decrease success'];
+}
+
+$stmt = $pdo->prepare($sql);
+$stmt->bindValue(':sale', $saleId, PDO::PARAM_INT);
+$stmt->bindValue(':movie', $movieId, PDO::PARAM_INT);
+$stmt->execute();
+
+json_out($answer);

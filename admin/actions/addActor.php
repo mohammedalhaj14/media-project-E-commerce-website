@@ -1,57 +1,28 @@
 <?php
-session_start();
-if(!isset($_SESSION["admin"])){
-    header("location:../index.php");
-    die();
+require_once __DIR__ . '/_bootstrap.php';
+require_admin();
+
+$name          = post_text('actor', 30);          // actors.ActorName is varchar(30)
+$genderId      = post_id('gender');
+$nationalityId = post_id('nationality');
+
+if ($name === '' || $genderId === null || $nationalityId === null) {
+    flash_redirect('addActor', false, 'actors.php');
 }
-if(isset($_POST["actor"]) && isset($_POST["gender"]) && isset($_POST["nationality"])
-&& !empty(trim($_POST["actor"])) && !empty(trim($_POST["gender"])) && !empty(trim($_POST["nationality"]))
-&& is_numeric($_POST["gender"]) && is_numeric($_POST["nationality"])
-&& $_POST["gender"] > 0 && $_POST["nationality"] > 0){
 
-    $actor = trim($_POST["actor"]);
-    $genderID = trim($_POST["gender"]);
-    $nationalityID = trim($_POST["nationality"]);
+require_once __DIR__ . '/../../connection.php';
 
-    // validation Gender Id
-    require_once("../../connection.php");
-    $sql = "SELECT GenderID FROM genders;" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
-    $gneders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $genderArray = [] ;
-    foreach($gneders as $gneder){
-        $genderArray[] = $gneder["GenderID"];
-    }
-    if(!in_array($genderID , $genderArray)){
-        die("error");
-    }
-
-      // validation Nationality Id
-      require_once("../../connection.php");
-      $sql = "SELECT NationalityID FROM nationalities;" ;
-      $stmt = $pdo->prepare($sql);
-      $stmt->execute();
-      $nationalities = $stmt->fetchAll(PDO::FETCH_ASSOC);
-      $nationalitieArray = [] ;
-      foreach($nationalities as $nationalitie){
-          $nationalitieArray[] = $nationalitie["NationalityID"];
-      }
-      if(!in_array($nationalityID , $nationalitieArray)){
-          die("error 2");
-      }
-
-    //Insert Into actor
-    $sql = "INSERT INTO `actors` (`ActorName`, `GenderID`, `NationalityID`) VALUES (:actor, :gender , :nationality);" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":actor" , $actor);
-    $stmt->bindParam(":gender" , $genderID);
-    $stmt->bindParam(":nationality" , $nationalityID);
-    $stmt->execute();
-    $_SESSION["addActor"] = true ;
-    header("location:../actors.php");
-
-}else{
-    $_SESSION["addActor"] = false ;
-    header("location:../actors.php");
+if (!all_exist($pdo, 'genders', 'GenderID', [$genderId])
+    || !all_exist($pdo, 'nationalities', 'NationalityID', [$nationalityId])) {
+    flash_redirect('addActor', false, 'actors.php');
 }
+
+$stmt = $pdo->prepare(
+    "INSERT INTO actors (ActorName, GenderID, NationalityID) VALUES (:name, :gender, :nationality)"
+);
+$stmt->bindValue(':name', $name);
+$stmt->bindValue(':gender', $genderId, PDO::PARAM_INT);
+$stmt->bindValue(':nationality', $nationalityId, PDO::PARAM_INT);
+$stmt->execute();
+
+flash_redirect('addActor', true, 'actors.php');

@@ -1,19 +1,16 @@
 <?php
-session_start();
-if(!isset($_SESSION["admin"])){
-    header("location:../index.php");
-    die();
+require_once __DIR__ . '/_bootstrap.php';
+require_admin();
+
+$name = post_text('directors', 60);               // directors.DirectorName is varchar(60)
+if ($name === '') {
+    flash_redirect('addDirectors', false, 'directors.php');
 }
-if(isset($_POST["directors"]) && !empty(trim($_POST["directors"]))){
-    $director = trim($_POST["directors"]);
-    require_once("../../connection.php");
-    $sql = "INSERT INTO directors(DirectorName) VALUES(:director)" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":director" , $director) ; 
-    $stmt->execute();
-    $_SESSION["addDirectors"] = true ;
-    header("location:../directors.php");
-}else{
-    $_SESSION["addDirectors"] = false ;
-    header("location:../directors.php");
-}
+
+require_once __DIR__ . '/../../connection.php';
+
+$stmt = $pdo->prepare("INSERT INTO directors (DirectorName) VALUES (:name)");
+$stmt->bindValue(':name', $name);
+$stmt->execute();
+
+flash_redirect('addDirectors', true, 'directors.php');

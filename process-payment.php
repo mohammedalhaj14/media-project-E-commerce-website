@@ -1,61 +1,64 @@
 <?php
+// Step 1 of the payment: create a Stripe PaymentIntent.
+// The amount is calculated here from the database. The cart is NOT closed and the stock is NOT changed yet;
+// that happens in finalize-payment.php after Stripe confirms that the money was received.
 session_start();
-require 'vendor/autoload.php';
+header('Content-Type: application/json');
 
-\Stripe\Stripe::setApiKey('sk_test_51QJBGNK9JqRD1EchtmBO2ZRnfGcfK5RgGlNLwlR9ByElxLUeOIaioV5KzqYmFsWHE9DZMvfHWRX1MfgDUa37zzGc00QMl3Rqs6'); // المفتاح السري
-
-function createPaymentIntent($amount, $currency = 'usd') {
-    try {
-        $paymentIntent = \Stripe\PaymentIntent::create([
-            'amount' => $amount, // المبلغ بوحدات السنت
-            'currency' => $currency,
-            'payment_method_types' => ['card'],
-        ]);
-        
-        return $paymentIntent->client_secret;
-    } catch (Exception $e) {
-        return 'Error: ' . $e->getMessage();
-    }
+function respond(array $data, int $status = 200): void
+{
+    http_response_code($status);
+    echo json_encode($data);
+    exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents("php://input"), true);
-
-    
-    $amountt = $data['amount'] * 100;
-    $saleID = $data['saleID'];
-    require_once("connection.php");
-
-    $sql = "SELECT sales.SaleID, sales.ClientID FROM `sales` WHERE sales.SaleID = :saleID AND sales.ClientID = :clientID AND Opened = 1;";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":saleID", $saleID);
-    $stmt->bindParam(":clientID", $_SESSION["user"]);
-    $stmt->execute();
-    $sale = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$sale) {
-        die("Sale not found or unauthorized access.");
-    }
-
-    $sql = 'UPDATE sales set sales.Opened = 0 WHERE sales.SaleID=:saleID';
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":saleID" , $saleID);
-    $stmt->execute();
-    $sql = "SELECT movieID,Qty FROM saledetail WHERE SaleID=:saleID" ;
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":saleID" , $saleID);
-    $stmt->execute();
-    $moviesID = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    for($i = 0 ; $i < count($moviesID) ; $i++){
-        $sql = "UPDATE movies 
-                SET movies.Quantity = movies.Quantity-".$moviesID[$i]["Qty"]."
-                WHERE movies.MovieID=:movieID";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":movieID" , $moviesID[$i]["movieID"]);
-        $stmt->execute();        
-    }
-    $clientSecret = createPaymentIntent($amountt);
-
-    echo json_encode(['client_secret' => $clientSecret]);
+if (!isset($_SESSION['user'])) {
+    respond(['error' => 'Please log in again.'], 401);
 }
-?>
+$userId = (int) $_SESSION['user'];
+
+$input  = json_decode(file_get_contents('php://input'), true);
+$saleId = (is_array($input) && isset($input['saleID']) && ctype_digit((string) $input['saleID'])) ? (int) $input['saleID'] : 0;
+if ($saleId < 1) {
+    respond(['error' => 'Invalid request.'], 400);
+}
+
+require_once __DIR__ . '/connection.php';
+require_once __DIR__ . '/includes/cart_helpers.php';
+
+$cart = load_open_cart($pdo, $saleId, $userId);
+if ($cart === null) {
+    respond(['error' => 'Your cart is empty or no longer available.'], 404);
+}
+
+$problem = cart_stock_problem($cart);
+if ($problem !== null) {
+    respond(['error' => 'Not enough stock for "' . $problem . '". Please update your cart.'], 409);
+}
+
+if ($cart['totalCents'] < 50) {                       // Stripe minimum charge
+    respond(['error' => 'The order total is too small to be paid by card.'], 400);
+}
+
+if (!file_exists(__DIR__ . '/stripe-config.php')) {
+    error_log('stripe-config.php is missing');
+    respond(['error' => 'Payments are not configured yet.'], 500);
+}
+$config = require __DIR__ . '/stripe-config.php';
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+try {
+    \Stripe\Stripe::setApiKey($config['secret_key']);
+    $intent = \Stripe\PaymentIntent::create([
+        'amount'               => $cart['totalCents'],
+        'currency'             => $config['currency'] ?? 'usd',
+        'payment_method_types' => ['card'],
+        'metadata'             => ['sale_id' => (string) $saleId, 'client_id' => (string) $userId],
+    ]);
+} catch (\Throwable $e) {
+    error_log('Stripe error (create): ' . $e->getMessage());
+    respond(['error' => 'The payment service is not available. Please try again later.'], 502);
+}
+
+respond(['client_secret' => $intent->client_secret, 'payment_intent_id' => $intent->id]);

@@ -1,25 +1,33 @@
 <?php
-if (isset($_POST["delete"]) && $_POST["delete"] === "true") {
-    if (isset($_POST["saleID"], $_POST["movieID"], $_POST["qty"])) {
-        $saleID = $_POST["saleID"];
-        $movieID = $_POST["movieID"];
-        $qty = $_POST["qty"];
-        require_once("../connection.php");
+require_once __DIR__ . '/_helpers.php';
 
-        // Proceed with deletion logic in the database
-        $deleteSql = "DELETE FROM saledetail WHERE SaleID = :saleID AND MovieID = :movieID";
-        $deleteStmt = $pdo->prepare($deleteSql);
-        $deleteStmt->bindParam(":saleID", $saleID);
-        $deleteStmt->bindParam(":movieID", $movieID);
-        $deleteStmt->execute();
+$userId = require_user_json();            // 401 JSON when nobody is logged in
 
-        // Check if the deletion was successful
-        if ($deleteStmt->rowCount() > 0) {
-            echo json_encode(["delete" => "success", "message" => "Item deleted successfully."]);
-        } else {
-            echo json_encode(["error" => "Item not found or couldn't be deleted."]);
-        }
-    } else {
-        echo json_encode(["error" => "Missing parameters."]);
-    }
+if (($_POST['delete'] ?? '') !== 'true') {
+    json_out(['error' => 'Missing parameters.']);
 }
+
+$saleId  = post_id('saleID');
+$movieId = post_id('movieID');
+if ($saleId === null || $movieId === null) {
+    json_out(['error' => 'Missing parameters.']);
+}
+
+require_once __DIR__ . '/../connection.php';
+
+// Only a row in this customer's own OPEN cart can be removed.
+$stmt = $pdo->prepare(
+    "DELETE sd FROM saledetail sd
+     JOIN sales s ON s.SaleID = sd.SaleID
+     WHERE sd.SaleID = :sale AND sd.MovieID = :movie AND s.ClientID = :user AND s.Opened = 1"
+);
+$stmt->bindValue(':sale', $saleId, PDO::PARAM_INT);
+$stmt->bindValue(':movie', $movieId, PDO::PARAM_INT);
+$stmt->bindValue(':user', $userId, PDO::PARAM_INT);
+$stmt->execute();
+
+if ($stmt->rowCount() > 0) {
+    json_out(['delete' => 'success', 'message' => 'Item deleted successfully.']);
+}
+
+json_out(['error' => "Item not found or couldn't be deleted."]);
