@@ -10,7 +10,7 @@ A high-performance, full-stack digital marketplace designed for media distributi
 
 ## 🔗 Live Demo
 
-**[media-shop.infinityfree.io](http://media-shop.infinityfree.io)**
+**[media-shop.infinityfree.io](https://media-shop.infinityfree.io)**
 
 > ⚠️ Running in Stripe **test mode**. Use card `4242 4242 4242 4242`, any future expiry date, any CVC, and any ZIP code to complete a test purchase.
 
