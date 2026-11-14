@@ -8,19 +8,11 @@ A high-performance, full-stack digital marketplace designed for media distributi
 
 ---
 
-## 🖼️ Interface Gallery
+## 🔗 Live Demo
 
-### 🖥️ Desktop Experience
+**[media-shop.infinityfree.io](http://media-shop.infinityfree.io)**
 
-| **Discovery Portal**          | **Media Insights**                  |
-| :---------------------------- | :---------------------------------- |
-| ![Home Page](images/home.png) | ![Movie Page](images/moviePage.png) |
-
-### 🔐 User Lifecycle & Commerce
-
-| Sign In                    | Create Account                            | Shopping Cart            |
-| :------------------------- | :---------------------------------------- | :----------------------- |
-| ![Login](images/login.png) | ![Registration](images/registratiion.png) | ![Cart](images/cart.png) |
+> ⚠️ Running in Stripe **test mode**. Use card `4242 4242 4242 4242`, any future expiry date, any CVC, and any ZIP code to complete a test purchase.
 
 ---
 
@@ -36,7 +28,7 @@ A high-performance, full-stack digital marketplace designed for media distributi
 ## 🛠️ Technical Stack
 
 | Component    | Technology                 |
-| :----------- | :------------------------- |
+| :----------- | :-------------------------- |
 | **Language** | PHP 8.x, JavaScript (ES6+) |
 | **Styling**  | Bootstrap 5, CSS3          |
 | **Database** | MySQL                      |
@@ -49,20 +41,20 @@ A high-performance, full-stack digital marketplace designed for media distributi
 1. **Clone:**
 
    ```bash
-   git clone https://github.com/mohammedalhaj14/Media-E-Commerce-Project-PHP.git
+   git clone https://github.com/mohammedalhaj14/media-project-E-commerce-website.git
    ```
 
 2. **Database:**
 
-   * Import `database.sql` into phpMyAdmin.
+   * Import `media.sql` into phpMyAdmin.
 
 3. **Configuration:**
 
-   * Update `db_config.php` with your database credentials.
+   * Update `connection.php` with your database credentials.
 
 4. **Stripe Setup:**
 
-   * Add your API keys inside `checkout.php`.
+   * Create a `stripe-config.php` file (not tracked in Git) with your Stripe secret and publishable keys.
 
 ---
 
